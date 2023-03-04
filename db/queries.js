@@ -1,0 +1,6 @@
+class SqlQueries {
+  constructor();
+
+  getManagers = "";
+  
+}
