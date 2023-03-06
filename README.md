@@ -35,6 +35,8 @@ To run the app, enter `node index` from the command-line.
 <img src="https://github.com/craigrobertsdev/employee-tracker/blob/main/assets/images/screenshot.jpg">
 </p>
 
+A video demonstration of the application's usage can be found [here](https://watch.screencastify.com/v/W7VrkZcXW4AXTOXMYjqK).
+
 ## Contributing
 
 Fork the repo and submit a pull request.
