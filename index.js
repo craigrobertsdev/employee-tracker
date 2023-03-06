@@ -1,12 +1,11 @@
 const inquirer = require("inquirer");
 const cTable = require("console.table");
 require("dotenv").config();
-const MySqlConnection = require("./db/queries");
+const MySqlConnection = require("./db/MySQLConnection");
 const validation = require("./validation");
 
+// Create db context for use throughout the app
 const db = new MySqlConnection();
-
-let roles, managers, employees;
 
 const options = {
   type: "list",
@@ -32,8 +31,8 @@ const options = {
 
 // #region CREATE functions
 async function addEmployee() {
-  roles = await getRoles();
-  managers = await getManagers();
+  const roles = await getRoles();
+  const managers = await getManagers();
 
   const roleTitles = roles.map((role) => role.title);
   const managerNames = getEmployeeNames(managers);
@@ -65,7 +64,7 @@ async function addEmployee() {
 
   const { firstName, lastName, role, manager } = answers;
 
-  const roleId = findObj(roles, role).id;
+  const roleId = findObjInArr(roles, role).id;
 
   await db.addEmployeeToDatabase(firstName, lastName, roleId, manager.split(" ")[0], manager.split(" ")[1]);
 }
@@ -123,7 +122,7 @@ async function addRole() {
 
 //#region  READ functions
 async function viewAllRoles() {
-  roles = await db.getRoles();
+  const roles = await db.getRoles();
 
   console.table(roles);
 }
@@ -151,7 +150,7 @@ async function viewEmployeesByManager() {
     choices: managerNames,
   });
 
-  const id = getEmployeeId(managers, manager);
+  const id = getEmployeeId(managers, answer.manager);
 
   const rows = await db.getEmployeesByManagerId(id);
 
@@ -233,7 +232,6 @@ async function updateEmployeesManager() {
 
   const employeeId = getEmployeeId(employees, answer.employee);
 
-  console.log(answer.employee);
   let managerNames = getEmployeeNames(managers);
   managerNames = managerNames.filter((manager) => {
     return manager !== answer.employee;
@@ -243,8 +241,13 @@ async function updateEmployeesManager() {
     type: "list",
     name: "manager",
     message: "Select the employee's new manager:",
-    choices: managerNames,
+    choices: ["Nil", ...managerNames],
   });
+
+  if (answer.manager === "Nil") {
+    await db.updateEmployeesManager(employeeId, null);
+    return;
+  }
 
   const managerId = getEmployeeId(managers, answer.manager);
 
@@ -274,17 +277,15 @@ async function deleteEmployee() {
 async function deleteRole() {
   const roles = await db.getRoles();
   const roleNames = getRoleNames(roles);
-  // try {
+
   answer = await inquirer.prompt({
     type: "list",
     name: "role",
     message: "Select the role to delete:",
     choices: roleNames,
   });
-  // } catch (err) {
-  //   console.log(err);
-  // }
-  const roleId = findObj(roles, answer.role).id;
+
+  const roleId = findObjInArr(roles, answer.role).id;
 
   await db.deleteRole(roleId);
 }
@@ -300,11 +301,52 @@ async function deleteDepartment() {
     choices: departmentNames,
   });
 
-  const departmentId = findObj(departments, answer.department).id;
+  const departmentId = findObjInArr(departments, answer.department).id;
   await db.deleteDepartment(departmentId);
 }
 
 //#endregion
+
+// #region Helper Functions
+
+// given a value, searches an array of objects to determine whether that value exists within an object and returns the first one.
+// meant for use where a unique value is being searched for.
+function findObjInArr(objArr, val) {
+  if (!objArr || !val) return;
+
+  for (let i = 0; i < objArr.length; i++) {
+    for (let key of Object.keys(objArr[i])) {
+      if (objArr[i][key] === val) return objArr[i];
+    }
+  }
+}
+// given a list of objects with the properties first_name and last_name, returns an array of full names
+function getEmployeeNames(employees) {
+  return employees.map((employee) => `${employee.first_name} ${employee.last_name}`);
+}
+
+// given an array and a full name string, returns the object that contains the name provided
+function getEmployeeId(employeesArr, employeeName) {
+  return employeesArr.find((employee) => {
+    if (employee.first_name === employeeName.split(" ")[0] && employee.last_name === employeeName.split(" ")[1]) {
+      return employee;
+    }
+  }).id;
+}
+
+// takes a list of roles, returns a list of their titles
+function getRoleNames(roles) {
+  return roles.map((role) => role.title);
+}
+
+// takes a list of departments, returns a list of their names
+function getDepartments(departments) {
+  return departments.map((department) => department.name);
+}
+
+//#endregion
+
+// Application loop
 async function askQuestions() {
   await inquirer.prompt(options).then(async (answers) => {
     while (true) {
@@ -357,45 +399,10 @@ async function askQuestions() {
   });
 }
 
+// Creates DB connection using enviroment variables then starts the app loop
 async function init() {
   await db.initaliseDbConnection();
   askQuestions();
 }
-
-// #region Helper Functions
-
-// given a value, searches an array of objects to determine whether that value exists within an object and returns the first one.
-// meant for use where a unique value is being searched for.
-function findObj(objArr, val) {
-  if (!objArr || !val) return;
-
-  for (let i = 0; i < objArr.length; i++) {
-    for (let key of Object.keys(objArr[i])) {
-      if (objArr[i][key] === val) return objArr[i];
-    }
-  }
-}
-
-function getEmployeeNames(employees) {
-  return employees.map((employee) => `${employee.first_name} ${employee.last_name}`);
-}
-
-function getEmployeeId(employeesArr, employeeName) {
-  return employeesArr.find((employee) => {
-    if (employee.first_name === employeeName.split(" ")[0] && employee.last_name === employeeName.split(" ")[1]) {
-      return employee;
-    }
-  }).id;
-}
-
-function getRoleNames(roles) {
-  return roles.map((role) => role.title);
-}
-
-function getDepartments(departments) {
-  return departments.map((department) => department.name);
-}
-
-//#endregion
 
 init();

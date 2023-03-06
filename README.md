@@ -27,6 +27,8 @@ Node.js is required to use this tool.
 
 Create a `.env` file in the root of the project with the following variables:<br>`DB_USERNAME='database-username'`<br>`DB_PASSWORD='password`.
 
+First, run `db/schema.sql` then (optionally) `db/seeds/sql` with MySQL to create and seed the database.
+
 To run the app, enter `node index` from the command-line.
 
 <p align="center">

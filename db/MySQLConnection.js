@@ -9,7 +9,7 @@ class MySqlConnection {
       host: "localhost",
       user: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
-      database: "organisation_db",
+      database: process.env.DB_NAME,
       namedPlaceholders: true,
     });
   }
@@ -56,7 +56,7 @@ class MySqlConnection {
   }
 
   async getRoles() {
-    const [rows] = await this.db.execute("SELECT id, title, department_id AS department, salary FROM role");
+    const [rows] = await this.db.execute("SELECT r.id, r.title, r.salary, d.name AS department FROM role r JOIN department d ON r.department_id = d.id");
 
     return rows;
   }
