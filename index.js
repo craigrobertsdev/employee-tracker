@@ -307,7 +307,7 @@ async function deleteDepartment() {
 //#endregion
 async function askQuestions() {
   await inquirer.prompt(options).then(async (answers) => {
-    while (answers.option !== "Exit") {
+    while (true) {
       switch (answers.option) {
         case "View All Employees":
           await viewAllEmployees();
@@ -348,6 +348,8 @@ async function askQuestions() {
         case "View Budget By Department":
           await viewBudgetByDepartment();
           break;
+        case "Exit":
+          process.exit(0);
       }
 
       await askQuestions();
