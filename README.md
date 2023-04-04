@@ -23,7 +23,7 @@ To use this application, MySQL must be installed.
 
 ## Usage
 
-Node.js is required to use this tool.
+[Node.js](https://nodejs.org/en/download) is required to use this tool.
 
 Create a `.env` file in the root of the project with the following variables:<br>`DB_USERNAME='{database-username}'`<br>`DB_PASSWORD='{password}`<br>`DB_NAME='organisation_db'`.
 
